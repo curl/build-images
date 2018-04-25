@@ -1,0 +1,9 @@
+# Base from Ubuntu trusty
+FROM ubuntu:trusty
+
+# The docker build process is noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Run the install process using the provided script
+COPY scripts/ /scripts/
+RUN /scripts/dockerfile_gcc.sh
