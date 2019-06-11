@@ -1,0 +1,7 @@
+language: minimal
+
+script:
+  # Run all stages in one stage at the moment. Docker images are not shared
+  # between stages.
+  - ./stage1.sh
+  - ./stage2.sh
