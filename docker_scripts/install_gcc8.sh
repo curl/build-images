@@ -7,9 +7,9 @@ set -exuo pipefail
 # - ubuntu-toolchain-r-test
 add-apt-repository ppa:ubuntu-toolchain-r/test
 
-# Install gcc-8
+# Install gcc-8. Only install dependencies, not recommendations.
 apt-get -y update
-apt-get -y install gcc-8 g++-8
+apt-get -y install --no-install-recommends gcc-8 g++-8
 
 # Install gcc-8 as the standard cc and g++-8 as the standard c++
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 10

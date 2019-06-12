@@ -1,7 +1,51 @@
 language: minimal
+services:
+- docker
+jobs:
+  include:
+  # Pull requests don't have access to encrypted variables, so they cannot
+  # benefit from the multistage support.
 
-script:
-  # Run all stages in one stage at the moment. Docker images are not shared
-  # between stages.
-  - ./stage1.sh
-  - ./stage2.sh
+  # Stage 1: Build the base image
+  - stage: stage1_base_image
+    script: ./build_scripts/stage1.sh
+    if: type != pull_request
+
+  # Stage 2: GCC and Clang
+  - stage: stage2_gcc_clang
+    script: ./build_scripts/stage2.sh gcc8
+    if: type != pull_request
+  - script: ./build_scripts/stage2.sh clang7
+    if: type != pull_request
+
+  # Stage 3: Build remaining images
+  - stage: stage3_build_images
+    script: ./build_scripts/stage3.sh gssapi_libssh2
+    if: type != pull_request
+
+  # Stage 4: Test building curl
+  - stage: stage4_test_images
+    script: ./build_scripts/stage4.sh gssapi_libssh2
+    if: type != pull_request
+
+  # Cleanup: remove any temporary images
+  - stage: remove_images
+    script: ./build_scripts/cleanup.sh
+    if: tag IS blank AND type != pull_request
+
+  # -----
+
+  # For pull requests we still want to do testing, but we have to do it in
+  # serial mode.
+  - stage: all_stages_pull_request
+    script:
+      - ./build_scripts/stage1.sh
+      - ./build_scripts/stage2.sh
+      - ./build_scripts/stage3.sh
+      - ./build_scripts/stage4.sh
+    if: type = pull_request
+
+env:
+  global:
+  - secure: hZHhrJmUroDWlcXMs6oH9ckWpbKOd3/9z6EEceBmRy/X1J21N5vMCnnjeQT1uDRbN3IO/Ir56eCNQ8tGXYptH50/yxywQ4QtUk+vR/VrqUuI+m69lKG0WjDP+SzOCHaf17lbrXtyBPRsVZe+W34uNt0bMMcRpF3IG0WiNQFnrugwXtaYDyZPEJb8sb4s95lhHzsjfAaJQpUNncL7Tk4neg3ItZ0oLvjdBptMJqDOPrXtEFwBr8OMQ0WxkP7hdeDdj1xvTvvb1xmlI69tRO9w5xkAhLPD9YA7mcizCjnEPuLGFowiyafLF3MfQapII2opYaFyhoj1Z6gCUNNhi9ueDMOkSjq4TDgJ0SIGIHFJLf+9VMhubPFCMySGFjtI/unziSQjAnYOczM+crFPU3a4VxHti9289jTmiu9YmFxivb09PGo3OrWemHERySy3wtcKxbpruljk1F0gsFKrRFH4ovLLq4Oz0zfNyWnSZIdVVUc5TQKtJNlBQkLA1IAaSC6okIV+gTrdWHhPb9Fuxj4gb+qX0hNdLTwc7RDhPUF2ua/CnOi3JXOrE7Y9AZvN/9d6zlq+cfh4yYbOEEcpJELHSGhulaGgz1PQ3iSMbBh5L1c0CgNydbcoHRzVzdhZYNbm3C9t46pcb/EFjKH0eEDxjD/3CB9egLdXjnRoiMmr1/o=
+  - secure: UVw8wRAzc1YcbGnFeAVNohOKZ2vMtuaKJC53MobN/4HXCQ4xRST2XaUl6CkdS2MyXXrrvcMC9jER5lIJntwKYc8aCtEeSoqQP6EjWfODBPjg0IJll63uZaYSm/iLdavhjA/ZQN5NN5tIlOx5T9C47rBDmRJdB+L+pobDrMaGt35qZNfI7ibugN/ecfUfJkzldVEWr5wh732zuBjLdpXTzx/mbNZyolfOPXubysGs8LJI2aqU9VB68HlbbvZXq7oUzvYz6t0L2DornD3DazsQXFemuMqAqB/17eEpO4HqtzDO+6o0WRtjctLXFhvGX8sXYlMH24GuZvEemQeUlWpDPAKS9BiUNpG/21ShA0wCK+2BuiZ8rNBngZjRK2YLVgIi+2582knf3HxXsDlEKuuVdJRY6dVYekTXSNIR95I/WtypoXWHM1L5HhHFfecVgGu5yIPMgbLK3h0uV8G4E/Og6IY/OWBi0ZWKgmK8xLbKVf/MsK6Xa1uBxJvf3709WzyzxY0mVJTTIEgHCcCWsF9ixJDwJ6C7yPibJfwE/66q7XbFLFuahUMYGtcpreI8OIx7dNzdGRnAVzafygFGdzfPrgzN9zPmV72T1y0uqAJpWznRShWco4yneLxddvymrQ/Qrn77QFKbLbzM+8VBKnKnBw3wm88WbYdg1a7y8Jm8kns=
