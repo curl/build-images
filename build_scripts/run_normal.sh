@@ -24,4 +24,10 @@ then
 fi
 
 # Finally, just run the docker test.
-docker run --rm -it $ENV_CHECKSRC -v ${CURL_DIR}:/opt/curl ${FULL_IMAGE_NAME} /scripts/test_normal.sh $@
+# - Maps in ${CURL_DIR} as /opt/curl
+# - Runs /scripts/test_normal.sh as `testuser` with the current user's UID
+#   and GID.
+docker run --rm -it $ENV_CHECKSRC \
+  -v ${CURL_DIR}:/opt/curl \
+  ${FULL_IMAGE_NAME} \
+  /scripts/testuser_run.sh $(id -u) $(id -g) /scripts/test_normal.sh $@

@@ -16,6 +16,10 @@ pushd /opt/curl
 make
 make examples
 
+# Ensure the permissions are correct for the test user.
+mkdir -p ./tests/log
+chmod 777 ./tests/log
+
 # Run the tests.
 if [[ -z ${NOTESTS:-} ]]
 then
